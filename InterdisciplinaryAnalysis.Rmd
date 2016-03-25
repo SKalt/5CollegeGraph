@@ -1,0 +1,83 @@
+---
+title: "Analyzing Interdisciplinary Overlap in the Five Colleges"
+author: "Steven Kalt"
+date: "March 12, 2016"
+output: html_document
+---
+
+```{r include=FALSE}
+# setwd('./SKalt.github.io/5CollegeGraph')
+```
+
+I scraped all the courses listed in the [5 college course catalog](https://www.fivecolleges.edu/academics/courses) over the last two yearsto build [an interactive visualization of courses in each department in each institution](skalt.github.io/5CollegeGraph/index.html).  However, having done all the hard work, I figured I might as well perform some basic analyses on the resulting information.
+
+```{r imports echo=FALSE}
+library(igraph)
+library(jsonlite)
+library(lattice)
+```
+First, load the data
+```{r LoadData}
+json <- fromJSON(readChar('temp', file.info('temp')$size))
+```
+This returns a list with the keys `"H" "M" "A" "U" "S"`, denoting each institution.  
+
+
+```{r}
+number.unique.course.codes <- c(length(json$A), length(json$H), length(json$M),
+                               length(json$S), length(json$U))
+barplot(number.unique.course.codes, 
+        names.arg = c("Amherst", "Hampshire", "MHC", "Smith", "UMass"),
+        ylab = "Number Of Courses",
+        main = "Number of Courses in the 5 College Course Catalog
+        by Unique Course Code")
+```
+
+```{r}
+make.edgelist <- function(d){
+  # returns a 2-column dataframe describing all the directed eges in the graph
+  # Args
+  # d the list of courses' details at the institution
+  # Returns:
+  # a 2-column edgelist 
+  df <- data.frame()
+  n <- names(d)
+  counter <- 1
+  for (i in n){
+    if (length(d[n[i]]$prereqs) > 0){
+      for (j in d[n[i]]$prereqs){
+        df[counter, 1] <- n[i]
+        df[counter, 2] <- j
+        counter <- counter + 1
+      }
+    }
+  }
+  return(df)
+}
+```
+```{r}
+d <- json$H
+df <- data.frame()
+n <- names(d)
+counter <- 1
+for (i in n){
+  if (length(d[[i]][["prereqs"]]) > 0){
+    counter <- counter +1 
+    for (j in d[[i]][["prereqs"]]){
+      df[counter, 1] <- i
+      df[counter, 2] <- j
+      counter <- counter + 1
+    }
+  }
+}
+```
+
+x <- json$H
+count <- 0
+for (i in x){
+  if (length(i$prereqs) > 0){
+    count <- count + 1
+  }
+}
+```
+Looks like I accidentally left Amherst's prereqs delimiter out...
